@@ -1,0 +1,7 @@
+{
+    order cache first
+}
+
+http://localhost:9090
+cache
+respond "Hi"
