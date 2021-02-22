@@ -1,7 +1,14 @@
 {
     order cache first
+
+    cache {
+        type redis
+        host redis:6379
+    }
 }
 
 http://localhost:9090
-cache
+cache {
+    bypass wp-admin wp-login system
+}
 respond "Hi"
