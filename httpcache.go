@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"time"
 
@@ -41,6 +42,7 @@ type Config struct {
 	Host string `json:"host,omitempty"`
 
 	Bypass []string `json:"bypass"`
+	Expire uint64   `json:"expire"`
 }
 
 // Cache stuff
@@ -201,6 +203,9 @@ func (c *Cache) UnmarshalCaddyfile(d *caddyfile.Dispenser) error {
 			switch d.Val() {
 			case "bypass":
 				c.Config.Bypass = d.RemainingArgs()
+			case "expire":
+				expire, _ := strconv.ParseUint(d.RemainingArgs()[0], 10, 64)
+				c.Config.Expire = expire
 			}
 		}
 	}

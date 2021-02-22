@@ -10,5 +10,6 @@
 http://localhost:9090
 cache {
     bypass wp-admin wp-login system
+    expire 120
 }
 reverse_proxy localhost:8080
