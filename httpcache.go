@@ -95,6 +95,26 @@ func parseCaddyfileHandlerDirective(h httpcaddyfile.Helper) (caddyhttp.Middlewar
 	return c, nil
 }
 
+// UnmarshalCaddyfile sets up the handler from Caddyfile tokens. Syntax:
+//
+//	cache {
+//		bypass wp-admin wp-login system
+//	}
+//
+// This may change.
+func (c *Cache) UnmarshalCaddyfile(d *caddyfile.Dispenser) error {
+	for d.Next() {
+		for d.NextBlock(0) {
+			switch d.Val() {
+			case "bypass":
+				c.Config.Bypass = d.RemainingArgs()
+			}
+		}
+	}
+
+	return nil
+}
+
 // Provision _
 func (c *Cache) Provision(ctx caddy.Context) error {
 	c.logger = ctx.Logger(c)
