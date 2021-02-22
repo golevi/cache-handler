@@ -1,6 +1,10 @@
 package httpcache
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -48,6 +52,14 @@ type Cache struct {
 	logger *zap.Logger
 }
 
+type cacheResponse struct {
+	Status        string      `json:"status"`
+	StatusCode    int         `json:"status_code"`
+	Headers       http.Header `json:"headers"`
+	Body          []byte      `json:"body"`
+	ContentLength int64       `json:"content_length"`
+}
+
 // CaddyModule returns the Caddy module information.
 func (Cache) CaddyModule() caddy.ModuleInfo {
 	return caddy.ModuleInfo{
@@ -57,10 +69,18 @@ func (Cache) CaddyModule() caddy.ModuleInfo {
 }
 
 func (c *Cache) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp.Handler) error {
-	key := strings.Join([]string{r.Host, r.RequestURI, r.Method}, "-")
+	key := key(r)
+
+	// Might eventually do something with regex, but for now, only check if the
+	// beginning of the URI matches any of the bypass strings.
+	uri := r.RequestURI[1:]
+	segments := strings.Split(uri, "/")
+	if len(segments) > 0 {
+		uri = segments[0]
+	}
 
 	// Check the config to see if this URI should NOT be cached
-	if contains(c.Config.Bypass, r.RequestURI[1:]) {
+	if contains(c.Config.Bypass, uri) {
 		w.Header().Add("Cache-Status", "bypass")
 		return next.ServeHTTP(w, r)
 	}
@@ -73,7 +93,20 @@ func (c *Cache) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp
 			return err
 		}
 
-		w.Write(response.([]byte))
+		var cr = cacheResponse{}
+		err = json.Unmarshal((response).([]byte), &cr)
+		if err != nil {
+			return err
+		}
+
+		for name, values := range cr.Headers {
+			for _, value := range values {
+				w.Header().Add(name, value)
+			}
+		}
+
+		w.WriteHeader(cr.StatusCode)
+		w.Write(cr.Body)
 
 		return nil
 	}
@@ -87,12 +120,33 @@ func (c *Cache) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp
 	// Next, please.
 	next.ServeHTTP(recorder, r)
 
+	body, err := ioutil.ReadAll(recorder.Result().Body)
+	if err != nil {
+		c.logger.Error(err.Error())
+	}
+
+	cr := &cacheResponse{
+		Status:        recorder.Result().Status,
+		StatusCode:    recorder.Result().StatusCode,
+		Headers:       recorder.Result().Header,
+		Body:          body,
+		ContentLength: recorder.Result().ContentLength,
+	}
+
+	response, err := json.Marshal(cr)
+	if err != nil {
+		c.logger.Error(err.Error())
+	}
+
+	c.Store.Put(key, response, time.Second*30)
+
+	for name, values := range cr.Headers {
+		for _, value := range values {
+			w.Header().Add(name, value)
+		}
+	}
 	w.WriteHeader(recorder.Code)
-	content := recorder.Body.Bytes()
-
-	c.Store.Put(key, content, time.Second*30)
-
-	w.Write(content)
+	w.Write(body)
 
 	return nil
 }
@@ -173,6 +227,15 @@ func contains(s []string, str string) bool {
 	}
 
 	return false
+}
+
+func key(r *http.Request) string {
+	h := sha256.New()
+	h.Write([]byte(strings.Join([]string{r.Host, r.RequestURI, r.Method}, "-")))
+	hashBytes := h.Sum(nil)
+	hash := hex.EncodeToString(hashBytes)
+
+	return hash
 }
 
 var (
