@@ -165,4 +165,5 @@ func contains(s []string, str string) bool {
 var (
 	_ caddy.Provisioner           = (*Cache)(nil)
 	_ caddyhttp.MiddlewareHandler = (*Cache)(nil)
+	_ caddyfile.Unmarshaler       = (*Cache)(nil)
 )
