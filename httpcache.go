@@ -193,7 +193,11 @@ func parseCaddyfileHandlerDirective(h httpcaddyfile.Helper) (caddyhttp.Middlewar
 // UnmarshalCaddyfile sets up the handler from Caddyfile tokens. Syntax:
 //
 //	cache {
-//		bypass wp-admin wp-login system
+// 		expire 120                              # Cache expiration in seconds
+// 		method post                             # Don't typically cache POST
+// 		bypass wp-admin wp-login.php system     # WordPress and ExpressionEngine
+// 		# cookie exp_sessionid                  # ExpressionEngine
+// 		cookie wordpress_logged_in_.*           # WordPress
 //	}
 //
 // This may change.

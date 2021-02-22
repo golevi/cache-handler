@@ -3,7 +3,7 @@
 
     cache {
         type redis                          # Only Redis for now
-        host 45.76.4.135:6379               # Redis IP/Port
+        host 127.0.0.1:6379                 # Redis IP/Port
     }
 }
 
@@ -12,6 +12,7 @@ cache {
     expire 120                              # Cache expiration in seconds
     method post                             # Don't typically cache POST
     bypass wp-admin wp-login.php system     # WordPress and ExpressionEngine
+    # cookie uses regular expressions
     # cookie exp_sessionid                  # ExpressionEngine
     cookie wordpress_logged_in_.*           # WordPress
 }
