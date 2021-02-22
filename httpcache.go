@@ -116,6 +116,11 @@ func parseCaddyfileHandlerDirective(h httpcaddyfile.Helper) (caddyhttp.Middlewar
 		c.Config = *cfg
 	}
 
+	err := c.UnmarshalCaddyfile(h.Dispenser)
+	if err != nil {
+		return nil, err
+	}
+
 	return c, nil
 }
 
