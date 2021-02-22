@@ -42,7 +42,7 @@ type Config struct {
 	Host string `json:"host,omitempty"`
 
 	Bypass []string `json:"bypass"`
-	Expire uint64   `json:"expire"`
+	Expire int      `json:"expire"`
 }
 
 // Cache stuff
@@ -140,7 +140,7 @@ func (c *Cache) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp
 		c.logger.Error(err.Error())
 	}
 
-	c.Store.Put(key, response, time.Second*30)
+	c.Store.Put(key, response, time.Second*time.Duration(c.Config.Expire))
 
 	for name, values := range cr.Headers {
 		for _, value := range values {
@@ -204,7 +204,7 @@ func (c *Cache) UnmarshalCaddyfile(d *caddyfile.Dispenser) error {
 			case "bypass":
 				c.Config.Bypass = d.RemainingArgs()
 			case "expire":
-				expire, _ := strconv.ParseUint(d.RemainingArgs()[0], 10, 64)
+				expire, _ := strconv.Atoi(d.RemainingArgs()[0])
 				c.Config.Expire = expire
 			}
 		}
