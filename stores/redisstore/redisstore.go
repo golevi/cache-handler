@@ -14,7 +14,7 @@ type RedisStore struct {
 // NewRedisStore creates a new RedisStore
 func NewRedisStore(addr string) RedisStore {
 	rdb := redis.NewClient(&redis.Options{
-		Addr:     "redis:6379",
+		Addr:     addr,
 		Password: "", // no password set
 		DB:       0,  // use default DB
 	})
