@@ -33,7 +33,10 @@ type CacheStore interface {
 
 // Config options
 type Config struct {
+	Type string `json:"type,omitempty"`
 	Host string `json:"host,omitempty"`
+
+	Bypass []string `json:"bypass"`
 }
 
 // Cache stuff
@@ -55,6 +58,12 @@ func (Cache) CaddyModule() caddy.ModuleInfo {
 
 func (c *Cache) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp.Handler) error {
 	key := strings.Join([]string{r.Host, r.RequestURI, r.Method}, "-")
+
+	// Check the config to see if this URI should NOT be cached
+	if contains(c.Config.Bypass, r.RequestURI[1:]) {
+		w.Header().Add("Cache-Status", "bypass")
+		return next.ServeHTTP(w, r)
+	}
 
 	// If it is cached, we want to return it.
 	if c.Store.Has(key) {
@@ -148,7 +157,10 @@ func (c *Cache) UnmarshalCaddyfile(d *caddyfile.Dispenser) error {
 // Provision _
 func (c *Cache) Provision(ctx caddy.Context) error {
 	c.logger = ctx.Logger(c)
-	c.Store = redisstore.NewRedisStore("")
+	switch c.Config.Type {
+	case "redis":
+		c.Store = redisstore.NewRedisStore(c.Host)
+	}
 
 	return nil
 }
