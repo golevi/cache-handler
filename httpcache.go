@@ -19,6 +19,7 @@ var (
 
 func init() {
 	caddy.RegisterModule(Cache{})
+	httpcaddyfile.RegisterGlobalOption("cache", parseCaddyfileGlobalOption)
 	httpcaddyfile.RegisterHandlerDirective("cache", parseCaddyfileHandlerDirective)
 }
 
@@ -84,6 +85,29 @@ func (c *Cache) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp
 	w.Write(content)
 
 	return nil
+}
+func parseCaddyfileGlobalOption(d *caddyfile.Dispenser) (interface{}, error) {
+	cfg = &Config{}
+	for d.Next() {
+		for d.NextBlock(0) {
+			switch d.Val() {
+			case "host":
+				if !d.NextArg() {
+					return nil, d.ArgErr()
+				}
+
+				cfg.Host = d.Val()
+			case "type":
+				if !d.NextArg() {
+					return nil, d.ArgErr()
+				}
+
+				cfg.Type = d.Val()
+			}
+		}
+	}
+
+	return nil, nil
 }
 
 func parseCaddyfileHandlerDirective(h httpcaddyfile.Helper) (caddyhttp.MiddlewareHandler, error) {
