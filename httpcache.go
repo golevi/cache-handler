@@ -22,6 +22,13 @@ func init() {
 	httpcaddyfile.RegisterHandlerDirective("cache", parseCaddyfileHandlerDirective)
 }
 
+// CacheStore represents a way to cache
+type CacheStore interface {
+	Get(key string) (interface{}, error)
+	Has(key string) bool
+	Put(key string, value interface{}, expiration time.Duration)
+}
+
 // Config options
 type Config struct {
 	Host string `json:"host,omitempty"`
