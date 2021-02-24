@@ -41,6 +41,7 @@ type Config struct {
 
 	Bypass []string `json:"bypass"`
 	Expire int      `json:"expire"`
+	Cookie []string `json:"cookie"`
 }
 
 // Cache stuff
@@ -205,6 +206,8 @@ func (c *Cache) UnmarshalCaddyfile(d *caddyfile.Dispenser) error {
 			switch d.Val() {
 			case "bypass":
 				c.Config.Bypass = d.RemainingArgs()
+			case "cookie":
+				c.Config.Cookie = d.RemainingArgs()
 			case "expire":
 				expire, _ := strconv.Atoi(d.RemainingArgs()[0])
 				c.Config.Expire = expire
