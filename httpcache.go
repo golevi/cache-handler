@@ -237,7 +237,7 @@ func contains(s []string, str string) bool {
 }
 
 func key(r *http.Request) string {
-	return strings.Join([]string{r.Host, r.RequestURI}, "-")
+	return "request:" + r.Method + ":" + r.Host + ":" + r.URL.Path
 }
 
 var (
