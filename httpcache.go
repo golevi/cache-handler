@@ -1,8 +1,6 @@
 package httpcache
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -239,12 +237,7 @@ func contains(s []string, str string) bool {
 }
 
 func key(r *http.Request) string {
-	h := sha256.New()
-	h.Write([]byte(strings.Join([]string{r.Host, r.RequestURI, r.Method}, "-")))
-	hashBytes := h.Sum(nil)
-	hash := hex.EncodeToString(hashBytes)
-
-	return hash
+	return strings.Join([]string{r.Host, r.RequestURI}, "-")
 }
 
 var (
