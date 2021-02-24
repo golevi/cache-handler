@@ -1,8 +1,6 @@
 package httpcache
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -193,7 +191,11 @@ func parseCaddyfileHandlerDirective(h httpcaddyfile.Helper) (caddyhttp.Middlewar
 // UnmarshalCaddyfile sets up the handler from Caddyfile tokens. Syntax:
 //
 //	cache {
-//		bypass wp-admin wp-login system
+// 		expire 120                              # Cache expiration in seconds
+// 		method post                             # Don't typically cache POST
+// 		bypass wp-admin wp-login.php system     # WordPress and ExpressionEngine
+// 		# cookie exp_sessionid                  # ExpressionEngine
+// 		cookie wordpress_logged_in_.*           # WordPress
 //	}
 //
 // This may change.
@@ -235,12 +237,7 @@ func contains(s []string, str string) bool {
 }
 
 func key(r *http.Request) string {
-	h := sha256.New()
-	h.Write([]byte(strings.Join([]string{r.Host, r.RequestURI, r.Method}, "-")))
-	hashBytes := h.Sum(nil)
-	hash := hex.EncodeToString(hashBytes)
-
-	return hash
+	return strings.Join([]string{r.Host, r.RequestURI}, "-")
 }
 
 var (
