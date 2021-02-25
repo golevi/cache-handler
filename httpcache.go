@@ -14,6 +14,7 @@ import (
 	"github.com/caddyserver/caddy/v2/caddyconfig/caddyfile"
 	"github.com/caddyserver/caddy/v2/caddyconfig/httpcaddyfile"
 	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
+	"github.com/golevi/cache-handler/stores/filestore"
 	"github.com/golevi/cache-handler/stores/redisstore"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -271,6 +272,8 @@ func (c *Cache) Provision(ctx caddy.Context) error {
 	switch c.Config.Type {
 	case "redis":
 		c.Store = redisstore.NewRedisStore(c.Host)
+	case "file":
+		c.Store = filestore.NewFileStore()
 	}
 
 	return nil
