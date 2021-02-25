@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/caddyserver/caddy/v2"
@@ -14,6 +15,8 @@ import (
 	"github.com/caddyserver/caddy/v2/caddyconfig/httpcaddyfile"
 	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
 	"github.com/golevi/cache-handler/stores/redisstore"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.uber.org/zap"
 )
 
@@ -61,6 +64,15 @@ type cacheResponse struct {
 	ContentLength int64       `json:"content_length"`
 }
 
+var httpMetrics = struct {
+	init        sync.Once
+	cacheHit    *prometheus.CounterVec
+	cacheMiss   *prometheus.CounterVec
+	cacheBypass *prometheus.CounterVec
+}{
+	init: sync.Once{},
+}
+
 // CaddyModule returns the Caddy module information.
 func (Cache) CaddyModule() caddy.ModuleInfo {
 	return caddy.ModuleInfo{
@@ -70,6 +82,9 @@ func (Cache) CaddyModule() caddy.ModuleInfo {
 }
 
 func (c *Cache) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp.Handler) error {
+	labels := prometheus.Labels{"handler": "cache"}
+
+	// Key
 	key := key(r)
 
 	// Might eventually do something with regex, but for now, only check if the
@@ -83,12 +98,19 @@ func (c *Cache) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp
 	// Check the config to see if this URI should NOT be cached
 	if contains(c.Config.Bypass, uri) {
 		w.Header().Add("Cache-Status", "bypass")
+
+		ch := httpMetrics.cacheBypass.With(labels)
+		ch.Inc()
 		return next.ServeHTTP(w, r)
 	}
 
 	// If it is cached, we want to return it.
 	if c.Store.Has(key) {
 		w.Header().Add("Cache-Status", "hit")
+
+		ch := httpMetrics.cacheHit.With(labels)
+		ch.Inc()
+
 		response, err := c.Store.Get(key)
 		if err != nil {
 			return err
@@ -114,6 +136,9 @@ func (c *Cache) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp
 
 	// Wasn't cached :(
 	w.Header().Add("Cache-Status", "miss")
+
+	ch := httpMetrics.cacheMiss.With(labels)
+	ch.Inc()
 
 	// Save to cache
 	recorder := httptest.NewRecorder()
@@ -220,6 +245,28 @@ func (c *Cache) UnmarshalCaddyfile(d *caddyfile.Dispenser) error {
 
 // Provision _
 func (c *Cache) Provision(ctx caddy.Context) error {
+	const ns, sub = "caddy", "http"
+
+	basicLabels := []string{"handler"}
+	httpMetrics.cacheHit = promauto.NewCounterVec(prometheus.CounterOpts{
+		Namespace: ns,
+		Subsystem: sub,
+		Name:      "requests_cache_hit",
+		Help:      "Counter of HTTP cache hit requests",
+	}, basicLabels)
+	httpMetrics.cacheMiss = promauto.NewCounterVec(prometheus.CounterOpts{
+		Namespace: ns,
+		Subsystem: sub,
+		Name:      "requests_cache_miss",
+		Help:      "Counter of HTTP cache miss requests",
+	}, basicLabels)
+	httpMetrics.cacheBypass = promauto.NewCounterVec(prometheus.CounterOpts{
+		Namespace: ns,
+		Subsystem: sub,
+		Name:      "requests_cache_bypass",
+		Help:      "Counter of HTTP cache bypass requests",
+	}, basicLabels)
+
 	c.logger = ctx.Logger(c)
 	switch c.Config.Type {
 	case "redis":
