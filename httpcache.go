@@ -36,7 +36,7 @@ func init() {
 type Cache struct {
 	Config   config.Config
 	Store    stores.CacheStore
-	Deciders []handlers.Decider
+	Deciders []func(c config.Config, w http.ResponseWriter, r *http.Request) bool
 
 	logger *zap.Logger
 }
@@ -83,7 +83,7 @@ func (c *Cache) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp
 	// Loop through deciders to see whether or not this request should be cached
 	// or if we should bypass it and send it to the origin.
 	for _, decider := range c.Deciders {
-		if decider.ShouldBypass(c.Config, w, r) {
+		if decider(c.Config, w, r) {
 			w.Header().Add("Cache-Status", "bypass")
 			ch := httpMetrics.cacheBypass.With(labels)
 			ch.Inc()
@@ -263,17 +263,9 @@ func (c *Cache) Provision(ctx caddy.Context) error {
 		c.Store = stores.NewFileStore()
 	}
 
+	c.Deciders = append(c.Deciders, handlers.URI)
+
 	return nil
-}
-
-func contains(s []string, str string) bool {
-	for _, v := range s {
-		if v == str {
-			return true
-		}
-	}
-
-	return false
 }
 
 func key(r *http.Request) string {
