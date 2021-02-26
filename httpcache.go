@@ -14,6 +14,7 @@ import (
 	"github.com/caddyserver/caddy/v2/caddyconfig/caddyfile"
 	"github.com/caddyserver/caddy/v2/caddyconfig/httpcaddyfile"
 	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
+	"github.com/golevi/cache-handler/config"
 	"github.com/golevi/cache-handler/stores"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -21,7 +22,7 @@ import (
 )
 
 var (
-	cfg *Config
+	cfg *config.Config
 )
 
 func init() {
@@ -30,21 +31,11 @@ func init() {
 	httpcaddyfile.RegisterHandlerDirective("cache", parseCaddyfileHandlerDirective)
 }
 
-// Config options
-type Config struct {
-	Type string `json:"type,omitempty"`
-	Host string `json:"host,omitempty"`
-
-	Bypass []string `json:"bypass"`
-	Expire int      `json:"expire"`
-	Cookie []string `json:"cookie"`
-}
-
 // Cache stuff
 type Cache struct {
-	Config
-
-	Store stores.CacheStore
+	Config   config.Config
+	Store    stores.CacheStore
+	Deciders []handlers.Decider
 
 	logger *zap.Logger
 }
@@ -170,7 +161,7 @@ func (c *Cache) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp
 	return nil
 }
 func parseCaddyfileGlobalOption(d *caddyfile.Dispenser) (interface{}, error) {
-	cfg = &Config{}
+	cfg = &config.Config{}
 	for d.Next() {
 		for d.NextBlock(0) {
 			switch d.Val() {
@@ -263,7 +254,7 @@ func (c *Cache) Provision(ctx caddy.Context) error {
 	c.logger = ctx.Logger(c)
 	switch c.Config.Type {
 	case "redis":
-		c.Store = stores.NewRedisStore(c.Host)
+		c.Store = stores.NewRedisStore(c.Config.Host)
 	case "file":
 		c.Store = stores.NewFileStore()
 	}
