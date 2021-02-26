@@ -1,3 +1,3 @@
 # Caddy Cache-Handler
 
-Comes with Redis.
+[Stores](stores)
