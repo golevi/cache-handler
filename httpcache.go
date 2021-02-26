@@ -15,6 +15,7 @@ import (
 	"github.com/caddyserver/caddy/v2/caddyconfig/httpcaddyfile"
 	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
 	"github.com/golevi/cache-handler/config"
+	"github.com/golevi/cache-handler/handlers"
 	"github.com/golevi/cache-handler/stores"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -79,13 +80,16 @@ func (c *Cache) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp
 		uri = segments[0]
 	}
 
-	// Check the config to see if this URI should NOT be cached
-	if contains(c.Config.Bypass, uri) {
-		w.Header().Add("Cache-Status", "bypass")
+	// Loop through deciders to see whether or not this request should be cached
+	// or if we should bypass it and send it to the origin.
+	for _, decider := range c.Deciders {
+		if decider.ShouldBypass(c.Config, w, r) {
+			w.Header().Add("Cache-Status", "bypass")
+			ch := httpMetrics.cacheBypass.With(labels)
+			ch.Inc()
 
-		ch := httpMetrics.cacheBypass.With(labels)
-		ch.Inc()
-		return next.ServeHTTP(w, r)
+			return next.ServeHTTP(w, r)
+		}
 	}
 
 	// If it is cached, we want to return it.
