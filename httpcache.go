@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 
@@ -71,14 +70,6 @@ func (c *Cache) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp
 
 	// Key
 	key := key(r)
-
-	// Might eventually do something with regex, but for now, only check if the
-	// beginning of the URI matches any of the bypass strings.
-	uri := r.RequestURI[1:]
-	segments := strings.Split(uri, "/")
-	if len(segments) > 0 {
-		uri = segments[0]
-	}
 
 	// Loop through deciders to see whether or not this request should be cached
 	// or if we should bypass it and send it to the origin.
