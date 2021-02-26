@@ -14,6 +14,7 @@ import (
 	"github.com/caddyserver/caddy/v2/caddyconfig/caddyfile"
 	"github.com/caddyserver/caddy/v2/caddyconfig/httpcaddyfile"
 	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
+	"github.com/golevi/cache-handler/stores"
 	"github.com/golevi/cache-handler/stores/redisstore"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -30,13 +31,6 @@ func init() {
 	httpcaddyfile.RegisterHandlerDirective("cache", parseCaddyfileHandlerDirective)
 }
 
-// CacheStore represents a way to cache
-type CacheStore interface {
-	Get(key string) (interface{}, error)
-	Has(key string) bool
-	Put(key string, value interface{}, expiration time.Duration)
-}
-
 // Config options
 type Config struct {
 	Type string `json:"type,omitempty"`
@@ -51,7 +45,7 @@ type Config struct {
 type Cache struct {
 	Config
 
-	Store CacheStore
+	Store stores.CacheStore
 
 	logger *zap.Logger
 }
