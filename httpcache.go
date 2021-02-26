@@ -193,7 +193,15 @@ func parseCaddyfileHandlerDirective(h httpcaddyfile.Helper) (caddyhttp.Middlewar
 	return c, nil
 }
 
-// UnmarshalCaddyfile sets up the handler from Caddyfile tokens. Syntax:
+// UnmarshalCaddyfile parses plugin settings from Caddyfile.
+//
+//	{
+//		order cache first
+//		cache {
+// 			type <redis>|<file>
+//			host localhost:6379
+// 		}
+//	}
 //
 //	cache {
 // 		expire 120                              # Cache expiration in seconds
