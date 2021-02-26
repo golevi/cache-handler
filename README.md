@@ -1,3 +1,5 @@
 # Caddy Cache-Handler
 
-[Stores](stores)
+* [Config](config)
+* [Handlers](handlers)
+* [Stores](stores)
