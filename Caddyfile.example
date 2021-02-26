@@ -10,7 +10,7 @@
 http://localhost:9090
 cache {
     expire 120                              # Cache expiration in seconds
-    method post                             # Don't typically cache POST
+    method post                             # HTTP Methods you want to bypass
     bypass wp-admin wp-login.php system     # WordPress and ExpressionEngine
     # cookie uses regular expressions
     # cookie exp_sessionid                  # ExpressionEngine

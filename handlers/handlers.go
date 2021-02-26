@@ -1,8 +1,10 @@
 package handlers
 
+import "strings"
+
 func contains(s []string, str string) bool {
 	for _, v := range s {
-		if v == str {
+		if strings.ToLower(v) == str {
 			return true
 		}
 	}

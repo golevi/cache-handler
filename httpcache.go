@@ -197,7 +197,7 @@ func parseCaddyfileHandlerDirective(h httpcaddyfile.Helper) (caddyhttp.Middlewar
 //
 //	cache {
 // 		expire 120                              # Cache expiration in seconds
-// 		method post                             # Don't typically cache POST
+// 		method post                             # HTTP Methods you want to bypass
 // 		bypass wp-admin wp-login.php system     # WordPress and ExpressionEngine
 // 		# cookie exp_sessionid                  # ExpressionEngine
 // 		cookie wordpress_logged_in_.*           # WordPress
@@ -215,6 +215,8 @@ func (c *Cache) UnmarshalCaddyfile(d *caddyfile.Dispenser) error {
 			case "expire":
 				expire, _ := strconv.Atoi(d.RemainingArgs()[0])
 				c.Config.Expire = expire
+			case "method":
+				c.Config.Method = d.RemainingArgs()
 			}
 		}
 	}
@@ -255,6 +257,7 @@ func (c *Cache) Provision(ctx caddy.Context) error {
 	}
 
 	c.Deciders = append(c.Deciders, handlers.URI)
+	c.Deciders = append(c.Deciders, handlers.Method)
 
 	return nil
 }

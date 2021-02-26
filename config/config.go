@@ -6,6 +6,7 @@ type Config struct {
 	Host string `json:"host,omitempty"`
 
 	Bypass []string `json:"bypass"`
+	Method []string `json:"method"`
 	Expire int      `json:"expire"`
 	Cookie []string `json:"cookie"`
 }
