@@ -258,6 +258,7 @@ func (c *Cache) Provision(ctx caddy.Context) error {
 
 	c.Deciders = append(c.Deciders, handlers.URI)
 	c.Deciders = append(c.Deciders, handlers.Method)
+	c.Deciders = append(c.Deciders, handlers.Cookie)
 
 	return nil
 }
