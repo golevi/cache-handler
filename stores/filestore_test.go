@@ -9,7 +9,7 @@ func TestPath(t *testing.T) {
 	fs := NewFileStore()
 
 	out := fs.path(key)
-	if out != "" {
+	if out == "" {
 		t.Error(out)
 	}
 }
