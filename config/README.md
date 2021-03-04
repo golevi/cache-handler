@@ -5,7 +5,7 @@
     order cache first
 
     cache {
-        type redis                          # Only Redis for now
+        type redis
         host 127.0.0.1:6379                 # Redis IP/Port
     }
 }
