@@ -4,7 +4,6 @@ import (
 	"crypto/sha256"
 	"encoding/gob"
 	"encoding/hex"
-	"log"
 	"os"
 	"strings"
 	"time"
@@ -41,7 +40,6 @@ func (f FileStore) Get(key string) (interface{}, error) {
 
 	path := f.path(key)
 	filepath := path + key
-	log.Println(filepath)
 
 	file, err := os.Open(filepath)
 	if err != nil {

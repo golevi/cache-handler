@@ -68,9 +68,6 @@ func (Cache) CaddyModule() caddy.ModuleInfo {
 func (c *Cache) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp.Handler) error {
 	labels := prometheus.Labels{"handler": "cache"}
 
-	// Key
-	key := key(r)
-
 	// Loop through deciders to see whether or not this request should be cached
 	// or if we should bypass it and send it to the origin.
 	for _, decider := range c.Deciders {
@@ -83,33 +80,46 @@ func (c *Cache) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp
 		}
 	}
 
-	// If it is cached, we want to return it.
+	// We aren't going to bypass this request, so we are going to need to create
+	// a key based upon the details of the request.
+	key := key(r)
+
+	// Check to see if we have this key in our cache-store. If so, then we can
+	// retrieve it and return it to the client without hitting the origin.
 	if c.Store.Has(key) {
+		// Since we have the key, add the header.
 		w.Header().Add("Cache-Status", "hit")
 
+		// Increment our cache hit metric.
 		ch := httpMetrics.cacheHit.With(labels)
 		ch.Inc()
 
+		// Get the response from our cache-store.
 		response, err := c.Store.Get(key)
 		if err != nil {
 			return err
 		}
 
+		// Create a cacheResponse struct so we can reconstruct the response.
 		var cr = cacheResponse{}
 		err = json.Unmarshal((response).([]byte), &cr)
 		if err != nil {
 			return err
 		}
 
+		// Loop through all the headers from the response and set them.
 		for name, values := range cr.Headers {
 			for _, value := range values {
 				w.Header().Add(name, value)
 			}
 		}
 
+		// Write the HTTP status header.
 		w.WriteHeader(cr.StatusCode)
+		// Write the body of the response.
 		w.Write(cr.Body)
 
+		// Return nil since we don't need to do anything else.
 		return nil
 	}
 
