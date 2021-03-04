@@ -14,15 +14,19 @@ import (
 	"go.uber.org/zap"
 )
 
-// Cache stuff
+// Cache is the primary struct for Caddy to use. It contains the config, cache
+// store, deciders, and the logger.
 type Cache struct {
-	Config   config.Config
-	Store    stores.CacheStore
+	Config config.Config
+	Store  stores.CacheStore
+
+	// Deciders check to see whether the request should be cached.
 	Deciders []func(c config.Config, w http.ResponseWriter, r *http.Request) bool
 
 	logger *zap.Logger
 }
 
+// cacheResponse is essentially just a copy of Go's HTTP Response with JSON tags
 type cacheResponse struct {
 	Status        string      `json:"status"`
 	StatusCode    int         `json:"status_code"`
@@ -95,17 +99,22 @@ func (c *Cache) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp
 	ch := httpMetrics.cacheMiss.With(labels)
 	ch.Inc()
 
-	// Save to cache
+	// Create a new ResponseRecorder so we can manipulate/save the response.
+	//
+	// There might be a better way to do this.
 	recorder := httptest.NewRecorder()
 
-	// Next, please.
+	// Call the next middleware.
 	next.ServeHTTP(recorder, r)
 
+	// Read the response body.
 	body, err := ioutil.ReadAll(recorder.Result().Body)
 	if err != nil {
 		c.logger.Error(err.Error())
 	}
 
+	// Create our cacheResponse based on the response from all of the other
+	// middleware.
 	cr := &cacheResponse{
 		Status:        recorder.Result().Status,
 		StatusCode:    recorder.Result().StatusCode,
@@ -114,21 +123,27 @@ func (c *Cache) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp
 		ContentLength: recorder.Result().ContentLength,
 	}
 
+	// Convert our cacheResponse to JSON.
 	response, err := json.Marshal(cr)
 	if err != nil {
 		c.logger.Error(err.Error())
 	}
 
+	// Store the JSON in our cache store.
 	c.Store.Put(key, response, time.Second*time.Duration(c.Config.Expire))
 
+	// Loop through all the headers and make sure we add them to our response.
 	for name, values := range cr.Headers {
 		for _, value := range values {
 			w.Header().Add(name, value)
 		}
 	}
+	// Write the HTTP status code.
 	w.WriteHeader(recorder.Code)
+	// Write the body.
 	w.Write(body)
 
+	// Done
 	return nil
 }
 
