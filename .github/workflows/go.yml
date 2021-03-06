@@ -25,4 +25,4 @@ jobs:
       run: go test -v ./...
 
     - name: xcaddy
-      run: go install github.com/caddyserver/xcaddy/cmd/xcaddy@latest
+      run: go get github.com/caddyserver/xcaddy/cmd/xcaddy@latest
