@@ -23,9 +23,3 @@ jobs:
 
     - name: Test
       run: go test -v ./...
-
-    - name: xcaddy
-      run: go get github.com/caddyserver/xcaddy/cmd/xcaddy@latest
-
-    - name: xcaddy-build
-      run: xcaddy build --with github.com/golevi/cache-handler

@@ -1,0 +1,26 @@
+name: release
+
+on:
+  release:
+    types:
+      - created
+
+jobs:
+  build:
+    name: Build the binaries
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Xcaddy
+      run: go get github.com/caddyserver/xcaddy/cmd/xcaddy@latest
+
+    - name: Build
+      run: xcaddy build --with github.com/golevi/cache-handler
+
+    - name: upload binary artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: binaries
+        path: release/
