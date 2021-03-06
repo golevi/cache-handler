@@ -6,8 +6,8 @@ on:
       - created
 
 jobs:
-  build:
-    name: Build the binaries
+  setup:
+    name: Setup the ENV
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
@@ -16,9 +16,17 @@ jobs:
     - name: Xcaddy
       run: go get github.com/caddyserver/xcaddy/cmd/xcaddy@latest
 
+  build:
+    name: Build the binary
+    needs: setup
+    steps:
     - name: Build
       run: xcaddy build --with github.com/golevi/cache-handler
 
+  upload:
+    name: Upload the binary
+    needs: build
+    steps:
     - name: upload binary artifacts
       uses: actions/upload-artifact@v2
       with:
