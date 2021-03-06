@@ -24,9 +24,10 @@ jobs:
         run: go install github.com/caddyserver/xcaddy/cmd/xcaddy@latest
       -
         name: Build with xcaddy
-        run:
-          xcaddy build --output dist/caddy --with github.com/golevi/cache-handler
-          tar -czf dist/caddy.tar.gz dist/caddy
+        run: xcaddy build --output dist/caddy --with github.com/golevi/cache-handler
+      -
+        name: Compress
+        run: tar -czf dist/caddy.tar.gz dist/caddy
       -
         uses: "marvinpinto/action-automatic-releases@latest"
         with:
