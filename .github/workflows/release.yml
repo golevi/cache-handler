@@ -24,11 +24,13 @@ jobs:
         run: go install github.com/caddyserver/xcaddy/cmd/xcaddy@latest
       -
         name: Build with xcaddy
-        run: xcaddy build --output dist/caddy --with github.com/golevi/cache-handler
+        run:
+          xcaddy build --output dist/caddy --with github.com/golevi/cache-handler
+          tar -czf dist/caddy.tar.gz dist/caddy
       -
         uses: "marvinpinto/action-automatic-releases@latest"
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
           prerelease: false
           files: |
-            dist/caddy
+            dist/caddy.tar.gz
