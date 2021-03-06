@@ -20,6 +20,9 @@ jobs:
         with:
           go-version: 1.16
       -
+        name: Build with xcaddy
+        run: xcaddy build --output dist/caddy --with github.com/golevi/cache-handler
+      -
         name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v2
         with:
