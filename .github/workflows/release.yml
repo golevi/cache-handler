@@ -24,14 +24,19 @@ jobs:
         run: go install github.com/caddyserver/xcaddy/cmd/xcaddy@latest
       -
         name: Build with xcaddy
-        run: xcaddy build --output dist/caddy --with github.com/golevi/cache-handler
+        run: |
+          export GOOS="linux";export GOARCH="amd64"; xcaddy build --output dist/caddy-amd64 --with github.com/golevi/cache-handler
+          export GOOS="linux";export GOARCH="arm64"; xcaddy build --output dist/caddy-arm64 --with github.com/golevi/cache-handler
       -
         name: Compress
-        run: tar -czf dist/caddy.tar.gz dist/caddy
+        run: |
+          tar -czf dist/caddy-amd64.tar.gz dist/caddy-amd64
+          tar -czf dist/caddy-arm64.tar.gz dist/caddy-arm64
       -
         uses: "marvinpinto/action-automatic-releases@latest"
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
           prerelease: false
           files: |
-            dist/caddy.tar.gz
+            dist/caddy-amd64.tar.gz
+            dist/caddy-arm64.tar.gz
