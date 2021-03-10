@@ -151,9 +151,9 @@ func (c *Cache) Provision(ctx caddy.Context) error {
 		c.Store = stores.NewFileStore()
 	}
 
-	c.Deciders = append(c.Deciders, validators.URI)
-	c.Deciders = append(c.Deciders, validators.Method)
-	c.Deciders = append(c.Deciders, validators.Cookie)
+	c.Validators = append(c.Validators, validators.URI)
+	c.Validators = append(c.Validators, validators.Method)
+	c.Validators = append(c.Validators, validators.Cookie)
 
 	return nil
 }
