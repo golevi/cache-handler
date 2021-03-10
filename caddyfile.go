@@ -9,8 +9,8 @@ import (
 	"github.com/caddyserver/caddy/v2/caddyconfig/httpcaddyfile"
 	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
 	"github.com/golevi/cache-handler/config"
-	"github.com/golevi/cache-handler/handlers"
 	"github.com/golevi/cache-handler/stores"
+	"github.com/golevi/cache-handler/validators"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
@@ -151,9 +151,9 @@ func (c *Cache) Provision(ctx caddy.Context) error {
 		c.Store = stores.NewFileStore()
 	}
 
-	c.Deciders = append(c.Deciders, handlers.URI)
-	c.Deciders = append(c.Deciders, handlers.Method)
-	c.Deciders = append(c.Deciders, handlers.Cookie)
+	c.Validators = append(c.Validators, validators.URI)
+	c.Validators = append(c.Validators, validators.Method)
+	c.Validators = append(c.Validators, validators.Cookie)
 
 	return nil
 }

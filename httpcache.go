@@ -15,13 +15,13 @@ import (
 )
 
 // Cache is the primary struct for Caddy to use. It contains the config, cache
-// store, deciders, and the logger.
+// store, validators, and the logger.
 type Cache struct {
 	Config config.Config
 	Store  stores.CacheStore
 
-	// Deciders check to see whether the request should be cached.
-	Deciders []func(c config.Config, w http.ResponseWriter, r *http.Request) bool
+	// Validators check to see whether the request should be cached.
+	Validators []func(c config.Config, w http.ResponseWriter, r *http.Request) bool
 
 	logger *zap.Logger
 }
@@ -38,10 +38,10 @@ type cacheResponse struct {
 func (c *Cache) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp.Handler) error {
 	labels := prometheus.Labels{"handler": "cache"}
 
-	// Loop through deciders to see whether or not this request should be cached
+	// Loop through validators to see whether or not this request should be cached
 	// or if we should bypass it and send it to the origin.
-	for _, decider := range c.Deciders {
-		if decider(c.Config, w, r) {
+	for _, validator := range c.Validators {
+		if validator(c.Config, w, r) {
 			w.Header().Add("Cache-Status", "bypass")
 			ch := httpMetrics.cacheBypass.With(labels)
 			ch.Inc()
