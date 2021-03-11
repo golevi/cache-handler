@@ -152,7 +152,7 @@ func (c *Cache) Provision(ctx caddy.Context) error {
 	}
 
 	c.Validators = append(c.Validators, validators.URI)
-	c.Validators = append(c.Validators, validators.Method)
+	c.Validators = append(c.Validators, validators.ShouldBypassHTTPMethod)
 	c.Validators = append(c.Validators, validators.Cookie)
 
 	return nil
