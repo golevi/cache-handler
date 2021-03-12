@@ -1,5 +1,7 @@
 # Caddy Cache-Handler
 
+[![Go](https://github.com/golevi/cache-handler/actions/workflows/go.yml/badge.svg)](https://github.com/golevi/cache-handler/actions/workflows/go.yml)
+
 * [Config](config)
 * [Handlers](handlers)
 * [Stores](stores)
