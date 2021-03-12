@@ -1,6 +1,7 @@
 package httpcache
 
 import (
+	"regexp"
 	"strconv"
 	"sync"
 
@@ -121,6 +122,11 @@ func (c *Cache) UnmarshalCaddyfile(d *caddyfile.Dispenser) error {
 
 // Provision _
 func (c *Cache) Provision(ctx caddy.Context) error {
+	// Make sure regular expressions are valid
+	for _, cc := range c.Config.Cookie {
+		c.Config.CookieRegexp = append(c.Config.CookieRegexp, regexp.MustCompile(cc))
+	}
+
 	const ns, sub = "caddy", "http"
 
 	basicLabels := []string{"handler"}
