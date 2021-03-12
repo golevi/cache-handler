@@ -92,11 +92,13 @@ func parseCaddyfileHandlerDirective(h httpcaddyfile.Helper) (caddyhttp.Middlewar
 //	}
 //
 //	cache {
-// 		expire 120                              # Cache expiration in seconds
-// 		method post                             # HTTP Methods you want to bypass
-// 		bypass wp-admin wp-login.php system     # WordPress and ExpressionEngine
-// 		# cookie exp_sessionid                  # ExpressionEngine
-// 		cookie wordpress_logged_in_.*           # WordPress
+//		expire 120                              # Cache expiration in seconds
+//		bypass {
+//			paths wp-admin wp-login.php system  # WordPress and ExpressionEngine
+//			methods post                        # Don't typically cache POST
+//			cookies wordpress_logged_in_.*      # WordPress
+//			# cookie exp_sessionid              # ExpressionEngine
+//		}
 //	}
 //
 // This may change.
@@ -105,14 +107,19 @@ func (c *Cache) UnmarshalCaddyfile(d *caddyfile.Dispenser) error {
 		for d.NextBlock(0) {
 			switch d.Val() {
 			case "bypass":
-				c.Config.Bypass = d.RemainingArgs()
-			case "cookie":
-				c.Config.Cookie = d.RemainingArgs()
+				for nesting := d.Nesting(); d.NextBlock(nesting); {
+					switch d.Val() {
+					case "paths":
+						c.Config.Bypass.Paths = d.RemainingArgs()
+					case "methods":
+						c.Config.Bypass.Methods = d.RemainingArgs()
+					case "cookies":
+						c.Config.Bypass.Cookies = d.RemainingArgs()
+					}
+				}
 			case "expire":
 				expire, _ := strconv.Atoi(d.RemainingArgs()[0])
 				c.Config.Expire = expire
-			case "method":
-				c.Config.Method = d.RemainingArgs()
 			}
 		}
 	}
@@ -123,7 +130,7 @@ func (c *Cache) UnmarshalCaddyfile(d *caddyfile.Dispenser) error {
 // Provision _
 func (c *Cache) Provision(ctx caddy.Context) error {
 	// Make sure regular expressions are valid
-	for _, cc := range c.Config.Cookie {
+	for _, cc := range c.Config.Bypass.Cookies {
 		c.Config.CookieRegexp = append(c.Config.CookieRegexp, regexp.MustCompile(cc))
 	}
 

@@ -4,13 +4,18 @@ import "regexp"
 
 // Config options
 type Config struct {
-	Type string `json:"type,omitempty"`
-	Host string `json:"host,omitempty"`
+	Type   string `json:"type,omitempty"`
+	Host   string `json:"host,omitempty"`
+	Expire int    `json:"expire"`
 
-	Bypass []string `json:"bypass"`
-	Method []string `json:"method"`
-	Expire int      `json:"expire"`
-	Cookie []string `json:"cookie"`
+	Bypass Bypass `json:"bypass"`
 
 	CookieRegexp []*regexp.Regexp
+}
+
+// Bypass sets what should be bypassed by the cache.
+type Bypass struct {
+	Paths   []string `json:"paths"`
+	Methods []string `json:"methods"`
+	Cookies []string `json:"cookies"`
 }

@@ -17,5 +17,5 @@ func URI(c config.Config, w http.ResponseWriter, r *http.Request) bool {
 		uri = segments[0]
 	}
 
-	return contains(c.Bypass, uri)
+	return contains(c.Bypass.Paths, uri)
 }

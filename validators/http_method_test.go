@@ -10,7 +10,9 @@ import (
 
 func TestMethod(t *testing.T) {
 	cfg := config.Config{
-		Method: []string{"post", "head"},
+		Bypass: config.Bypass{
+			Methods: []string{"post", "head"},
+		},
 	}
 	req := httptest.NewRequest("get", "/", nil)
 	res := httptest.NewRecorder()

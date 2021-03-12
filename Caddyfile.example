@@ -10,10 +10,11 @@
 http://localhost:9090
 cache {
     expire 120                              # Cache expiration in seconds
-    method post                             # HTTP Methods you want to bypass
-    bypass wp-admin wp-login.php system     # WordPress and ExpressionEngine
-    # cookie uses regular expressions
-    # cookie exp_sessionid                  # ExpressionEngine
-    cookie wordpress_logged_in_.*           # WordPress
+    bypass {
+        paths wp-admin wp-login.php system  # WordPress and ExpressionEngine
+        methods post                        # Don't typically cache POST
+        cookies wordpress_logged_in_.*      # WordPress
+        # cookie exp_sessionid              # ExpressionEngine
+    }
 }
 reverse_proxy localhost:8080
