@@ -3,7 +3,6 @@ package httpcache
 import (
 	"regexp"
 	"strconv"
-	"sync"
 
 	"github.com/caddyserver/caddy/v2"
 	"github.com/caddyserver/caddy/v2/caddyconfig/caddyfile"
@@ -12,8 +11,6 @@ import (
 	"github.com/golevi/cache-handler/config"
 	"github.com/golevi/cache-handler/stores"
 	"github.com/golevi/cache-handler/validators"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
 var (
@@ -24,15 +21,6 @@ func init() {
 	caddy.RegisterModule(Cache{})
 	httpcaddyfile.RegisterGlobalOption("cache", parseCaddyfileGlobalOption)
 	httpcaddyfile.RegisterHandlerDirective("cache", parseCaddyfileHandlerDirective)
-}
-
-var httpMetrics = struct {
-	init        sync.Once
-	cacheHit    *prometheus.CounterVec
-	cacheMiss   *prometheus.CounterVec
-	cacheBypass *prometheus.CounterVec
-}{
-	init: sync.Once{},
 }
 
 // CaddyModule returns the Caddy module information.
@@ -133,28 +121,6 @@ func (c *Cache) Provision(ctx caddy.Context) error {
 	for _, cc := range c.Config.Bypass.Cookies {
 		c.Config.CookieRegexp = append(c.Config.CookieRegexp, regexp.MustCompile(cc))
 	}
-
-	const ns, sub = "caddy", "http"
-
-	basicLabels := []string{"handler"}
-	httpMetrics.cacheHit = promauto.NewCounterVec(prometheus.CounterOpts{
-		Namespace: ns,
-		Subsystem: sub,
-		Name:      "requests_cache_hit",
-		Help:      "Counter of HTTP cache hit requests",
-	}, basicLabels)
-	httpMetrics.cacheMiss = promauto.NewCounterVec(prometheus.CounterOpts{
-		Namespace: ns,
-		Subsystem: sub,
-		Name:      "requests_cache_miss",
-		Help:      "Counter of HTTP cache miss requests",
-	}, basicLabels)
-	httpMetrics.cacheBypass = promauto.NewCounterVec(prometheus.CounterOpts{
-		Namespace: ns,
-		Subsystem: sub,
-		Name:      "requests_cache_bypass",
-		Help:      "Counter of HTTP cache bypass requests",
-	}, basicLabels)
 
 	c.logger = ctx.Logger(c)
 	switch c.Config.Type {
