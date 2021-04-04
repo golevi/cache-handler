@@ -54,7 +54,7 @@ func (f FileStore) Get(key string) (interface{}, error) {
 		return nil, err
 	}
 
-	if time.Now().Sub(fc.Created) > fc.Expires {
+	if time.Since(fc.Created) > fc.Expires {
 		os.Remove(filepath)
 	}
 
