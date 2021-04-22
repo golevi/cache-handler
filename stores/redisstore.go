@@ -1,9 +1,10 @@
 package stores
 
 import (
+	"context"
 	"time"
 
-	"github.com/go-redis/redis"
+	"github.com/go-redis/redis/v8"
 )
 
 // RedisStore uses Redis
@@ -28,13 +29,15 @@ func NewRedisStore(addr string) RedisStore {
 
 // Get value from Redis.
 func (r RedisStore) Get(key string) (interface{}, error) {
-	cmd := r.Client.Get(key)
+	ctx := context.TODO()
+	cmd := r.Client.Get(ctx, key)
 	return cmd.Bytes()
 }
 
 // Has checks if the key exists.
 func (r RedisStore) Has(key string) bool {
-	cmd := r.Client.Get(key)
+	ctx := context.TODO()
+	cmd := r.Client.Get(ctx, key)
 	bytes, err := cmd.Bytes()
 	if err != nil {
 		return false
@@ -48,5 +51,6 @@ func (r RedisStore) Has(key string) bool {
 
 // Put the value in Redis.
 func (r RedisStore) Put(key string, value interface{}, expiration time.Duration) {
-	r.Client.Set(key, value, expiration)
+	ctx := context.TODO()
+	r.Client.Set(ctx, key, value, expiration)
 }

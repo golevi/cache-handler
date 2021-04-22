@@ -10,7 +10,6 @@ import (
 	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
 	"github.com/golevi/cache-handler/config"
 	"github.com/golevi/cache-handler/stores"
-	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
 )
 
@@ -36,15 +35,11 @@ type cacheResponse struct {
 }
 
 func (c *Cache) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp.Handler) error {
-	labels := prometheus.Labels{"handler": "cache"}
-
 	// Loop through validators to see whether or not this request should be cached
 	// or if we should bypass it and send it to the origin.
 	for _, validator := range c.Validators {
 		if validator(c.Config, w, r) {
 			w.Header().Add("Cache-Status", "bypass")
-			ch := httpMetrics.cacheBypass.With(labels)
-			ch.Inc()
 
 			return next.ServeHTTP(w, r)
 		}
@@ -59,10 +54,6 @@ func (c *Cache) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp
 	if c.Store.Has(key) {
 		// Since we have the key, add the header.
 		w.Header().Add("Cache-Status", "hit")
-
-		// Increment our cache hit metric.
-		ch := httpMetrics.cacheHit.With(labels)
-		ch.Inc()
 
 		// Get the response from our cache-store.
 		response, err := c.Store.Get(key)
@@ -95,9 +86,6 @@ func (c *Cache) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp
 
 	// Wasn't cached :(
 	w.Header().Add("Cache-Status", "miss")
-
-	ch := httpMetrics.cacheMiss.With(labels)
-	ch.Inc()
 
 	// Create a new ResponseRecorder so we can manipulate/save the response.
 	//
